@@ -18,13 +18,13 @@ services:
       - static:/backend_static
       - media:/app/media
   frontend:
-    image: ivdit/foodram_frontend
+    image: ivdit/foodgram_frontend
     env_file: .env
     command: cp -r /app/build/. /static/
     volumes:
       - static:/static
   gateway:
-    image: ivdit/kittygram_gateway
+    image: ivdit/foodgram_gateway
     ports:
       - 9000:80
     volumes:
