@@ -4,7 +4,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework.serializers import (IntegerField, ModelSerializer,
                                         PrimaryKeyRelatedField,
                                         SerializerMethodField,
-                                        SlugRelatedField)
+                                        ReadOnlyField)
 
 from recipes.models import (Cart, Favorites, Ingredients, RecipeIngridient,
                             Recipes, Tag)
@@ -99,18 +99,12 @@ class IngredientSerializer(ModelSerializer):
 
 class ShowRecipeIngredientsSerializer(ModelSerializer):
     id = PrimaryKeyRelatedField(
-        read_only=True,
-        source='ingredients'
+        queryset=Ingredients.objects.all(),
+        source='ingredient'
     )
-    name = SlugRelatedField(
-        source='ingredients.name',
-        read_only=True,
-        slug_field='name'
-    )
-    measurement_unit = SlugRelatedField(
-        source='ingredients.measurement_unit',
-        read_only=True,
-        slug_field='measurement_unit'
+    name = ReadOnlyField(source='ingredient.name')
+    measurement_unit = ReadOnlyField(
+        source='ingredient.measurement_unit'
     )
 
     class Meta:
