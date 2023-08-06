@@ -1,10 +1,9 @@
-from django.contrib.auth import get_user_model
-from django.db import models
-from django.db.models.constraints import UniqueConstraint
-from django.core.validators import MinValueValidator
-
 from datetime import datetime
 
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
+from django.db import models
+from django.db.models.constraints import UniqueConstraint
 
 User = get_user_model()
 
@@ -90,8 +89,8 @@ class Recipes(models.Model):
                                                         MinValueValidator(
                                                             MIN_INT_VALUE,
                                                             'укажите хоть'
-                                                            ' какое-то кол-во')
-                                                            ],
+                                                            ' какое-то'
+                                                            ' кол-во')],
                                                     help_text='введите время '
                                                     'приготовления в минутах')
     image = models.ImageField('картинка',
@@ -129,9 +128,9 @@ class RecipeIngridient(models.Model):
     amount = models.PositiveSmallIntegerField(validators=[MinValueValidator(
         MIN_INT_VALUE,
         'укажите хоть какое-то кол-во'
-        )],
+    )],
         verbose_name='кол-во '
-        )
+    )
 
     class Meta:
         verbose_name = 'Рецепт с ингридиентами'

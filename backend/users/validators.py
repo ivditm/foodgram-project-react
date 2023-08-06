@@ -1,7 +1,6 @@
-from django.core.exceptions import ValidationError
-
 import re
 
+from django.core.exceptions import ValidationError
 
 PATTERN_USER = r'^[\w.@+-]+\Z'
 USERNAME_VALIDATION_ERROR_MESSAGE = ('Имя пользователя не соответствует '

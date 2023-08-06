@@ -1,12 +1,11 @@
-from django.core.management.base import BaseCommand
+import os
 from pathlib import Path
 
-import psycopg2
 import pandas as pd
-from dotenv import load_dotenv
-import os
-
+import psycopg2
 from django.conf import settings
+from django.core.management.base import BaseCommand
+from dotenv import load_dotenv
 
 PROJECT_DIR = Path(settings.BASE_DIR).resolve().joinpath('data')
 FILE_TO_OPEN = PROJECT_DIR / 'ingredients.csv'
