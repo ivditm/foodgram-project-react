@@ -27,7 +27,7 @@ class AuthorStaffOrReadOnly(UserPermission):
 class AdminOrReadOnly(UserPermission):
 
     def has_object_permission(
-        self, request, view
+        self, request, view, obj
     ) -> bool:
         return (
             request.method in SAFE_METHODS

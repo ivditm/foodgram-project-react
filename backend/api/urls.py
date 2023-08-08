@@ -6,6 +6,8 @@ from api.views import (
     RecipeViewSet,
     TagViewSet,
     UserViewSet,
+    FollowApiView,
+    ListFollowViewSet,
 )
 
 app_name = "api"
@@ -17,6 +19,13 @@ router.register("recipes", RecipeViewSet, "recipes")
 router.register("users", UserViewSet, "users")
 
 urlpatterns = [
+    path('users/<int:id>/subscribe/',
+         FollowApiView.as_view(),
+         name='subscribe'
+         ),
+    path('users/subscriptions/', ListFollowViewSet.as_view(),
+         name='subscription'
+         ),
     path("", include(router.urls)),
     path("auth/", include("djoser.urls.authtoken")),
 ]
