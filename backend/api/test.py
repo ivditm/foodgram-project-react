@@ -114,14 +114,16 @@ class RecipeApiTest(APITestCase):
                 'password': 'dobby1234'}
         response = self.client_not_auth.post(url, data, format='json')
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
-        self.assertEqual(User.objects.count(), 3)
+        self.assertEqual(User.objects.count(), 4)
         self.assertEqual(User.objects.latest('id').username, 'dobby')
 
     def test_login(self):
-        data = {'email': 'blya@yandex.ru',
-                'password': 'blya1234'}
+        data = {
+            'password': 'blya1234',
+            'email': 'blya@yandex.ru',
+        }
         self.assertEqual(self.client_not_auth.post('/api/auth/token/login/',
-                         data, format='json').status_code, HTTPStatus.OK)
+                         data, format='json').status_code, HTTPStatus.CREATED)
 
     def test_profile(self):
         self.assertEqual(self.client.get(
@@ -153,7 +155,7 @@ class RecipeApiTest(APITestCase):
             "text": "suka_new_post", "cooking_time": 1}
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
-        self.assertEqual(Recipes.objects.count(), 4)
+        self.assertEqual(Recipes.objects.count(), 3)
         self.assertEqual(Recipes.objects.latest('id').name, 'suka_new_post')
 
     def test_delete_recipes(self):
@@ -197,6 +199,7 @@ class RecipeApiTest(APITestCase):
         wrong_post_response = self.client.post(url_1, data, format='json')
         good_post_response = self.client.post(url_2, data_1, format='json')
         delete_response = self.client.delete(url_1)
+        second_delete_response = self.client.delete(url_1)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(wrong_post_response.status_code,
                          HTTPStatus.BAD_REQUEST)
@@ -204,7 +207,8 @@ class RecipeApiTest(APITestCase):
         self.assertEqual(delete_response.status_code, HTTPStatus.NO_CONTENT)
         self.assertFalse(Cart.objects.filter(
             user=self.user, recipe=self.recipe).exists())
-        # self.assertEqual(delete_response.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertEqual(second_delete_response.status_code,
+                         HTTPStatus.BAD_REQUEST)
 
     def test_favorite(self):
         url_1 = f'/api/recipes/{self.recipe.id}/favorite/'

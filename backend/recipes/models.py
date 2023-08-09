@@ -10,6 +10,7 @@ User = get_user_model()
 NAME_MAX_LENGHT = SLUG_TAG_MAX_LENGHT = 200
 COLOR_TAG_MAX_LENGHT = 7
 MIN_INT_VALUE = 1
+ERROR_MESSAGE_MIN = 'укажите хоть какое-то кол-во'
 
 
 class Tag(models.Model):
@@ -88,9 +89,8 @@ class Recipes(models.Model):
                                                     validators=[
                                                         MinValueValidator(
                                                             MIN_INT_VALUE,
-                                                            'укажите хоть'
-                                                            ' какое-то'
-                                                            ' кол-во')],
+                                                            ERROR_MESSAGE_MIN)
+                                                    ],
                                                     help_text='введите время '
                                                     'приготовления в минутах')
     image = models.ImageField('картинка',
@@ -127,12 +127,16 @@ class RecipeIngridient(models.Model):
                                    verbose_name='ингридиенты')
     amount = models.PositiveSmallIntegerField(validators=[MinValueValidator(
         MIN_INT_VALUE,
-        'укажите хоть какое-то кол-во'
+        ERROR_MESSAGE_MIN
     )],
         verbose_name='кол-во '
     )
 
     class Meta:
+        constraints = [UniqueConstraint(
+            fields=['ingredient', 'recipe'],
+            name='unique_ingredient_in_recipe'
+        )]
         verbose_name = 'Рецепт с ингридиентами'
         verbose_name_plural = 'Рецепты с ингридиентами'
 
@@ -148,10 +152,6 @@ class Cart(models.Model):
                                on_delete=models.CASCADE,
                                verbose_name='Рецепт')
 
-    @property
-    def cooking_time(self):
-        return self.recipe.cooking_time
-
     class Meta:
         constraints = [UniqueConstraint(
             fields=['user', 'recipe'],
@@ -162,6 +162,10 @@ class Cart(models.Model):
         verbose_name_plural = 'Списки покупок'
         default_related_name = 'shopping_cart'
 
+    @property
+    def cooking_time(self):
+        return self.recipe.cooking_time
+
 
 class Favorites(models.Model):
     user = models.ForeignKey(User,
@@ -171,10 +175,6 @@ class Favorites(models.Model):
                                on_delete=models.CASCADE,
                                verbose_name='Рецепт')
 
-    @property
-    def cooking_time(self):
-        return self.recipe.cooking_time
-
     class Meta:
         constraints = [models.UniqueConstraint(
             fields=['user', 'recipe'],
@@ -183,3 +183,7 @@ class Favorites(models.Model):
         ordering = ('-id',)
         verbose_name = 'избранное'
         default_related_name = 'favorites'
+
+    @property
+    def cooking_time(self):
+        return self.recipe.cooking_time

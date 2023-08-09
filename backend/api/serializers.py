@@ -155,7 +155,6 @@ class ShowRecipeFullSerializer(ModelSerializer):
 
 class AddRecipeIngredientsSerializer(ModelSerializer):
     id = PrimaryKeyRelatedField(queryset=Ingredients.objects.all())
-    amount = IntegerField()
 
     class Meta:
         model = RecipeIngridient
@@ -189,7 +188,7 @@ class AddRecipeSerializer(ModelSerializer):
                     ' положительным числом'
                 )
             else:
-                ingredients_set.append(ingredient['id'])
+                ingredients_set.append(ingredient)
         return value
 
     def validate_tags(self, value):

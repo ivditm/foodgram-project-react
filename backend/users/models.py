@@ -79,6 +79,7 @@ class Follow(models.Model):
         ]
         verbose_name = 'подписка'
         verbose_name_plural = 'подписки'
+        default_related_name = 'follow'
 
     def __str__(self) -> str:
         return f'{self.user} подписан на {self.following}'
