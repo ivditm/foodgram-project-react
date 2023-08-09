@@ -14,7 +14,7 @@ HOME_HOST = os.getenv('HOME_HOST')
 DOMAIN = os.getenv('DOMAIN')
 
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [IP, HOST, HOME_HOST, DOMAIN]
 

@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from djoser.serializers import UserCreateSerializer, UserSerializer
 from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.serializers import (IntegerField, ModelSerializer,
@@ -24,26 +23,28 @@ class ShortRecipeSerializer(ModelSerializer):
         read_only_fields = ("__all__",)
 
 
-class UserRegistrationSerializer(UserCreateSerializer):
-    class Meta(UserCreateSerializer.Meta):
+class UserSerializer(ModelSerializer):
+    is_subscribed = SerializerMethodField()
+
+    class Meta:
         model = User
-        fields = ('email', 'username', 'first_name', 'last_name', 'password')
-
-
-class CustomUserSerializer(UserSerializer):
-    is_subscribed = SerializerMethodField(read_only=True)
-
-    class Meta():
-        model = User
-        fields = ('id', 'email', 'username', 'first_name',
-                  'last_name', 'is_subscribed', 'password')
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+            "password",
+        )
+        extra_kwargs = {"password": {"write_only": True}}
+        read_only_fields = ("is_subscribed",)
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        user = self.context.get("request").user
+        if user.is_anonymous or (user == obj):
             return False
-        return Follow.objects.filter(user=self.context['request'].user,
-                                     following=obj).exists()
+        return user.follower.filter(following=obj).exists()
 
     def create(self, validated_data):
         user = User(
@@ -122,7 +123,7 @@ class ShowRecipeIngredientsSerializer(ModelSerializer):
 
 class ShowRecipeFullSerializer(ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
-    author = CustomUserSerializer(read_only=True)
+    author = UserSerializer(read_only=True)
     ingredients = SerializerMethodField()
     is_favorited = SerializerMethodField()
     is_in_shopping_cart = SerializerMethodField()
@@ -163,7 +164,7 @@ class AddRecipeIngredientsSerializer(ModelSerializer):
 
 class AddRecipeSerializer(ModelSerializer):
     image = Base64ImageField()
-    author = CustomUserSerializer(read_only=True)
+    author = UserSerializer(read_only=True)
     ingredients = AddRecipeIngredientsSerializer(many=True)
     tags = PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True

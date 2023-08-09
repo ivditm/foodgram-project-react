@@ -3,9 +3,10 @@ from django.db.models import Sum
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -19,24 +20,15 @@ from .permissions import AdminOrReadOnly, AuthorStaffOrReadOnly
 from .serializers import (AddRecipeSerializer, FavouriteSerializer,
                           IngredientSerializer, ShoppingListSerializer,
                           ShowRecipeFullSerializer, TagSerializer,
-                          CustomUserSerializer, ShowFollowSerializer)
+                          UserSerializer, ShowFollowSerializer)
 
 User = get_user_model()
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
-    permission_classes = [AllowAny, ]
-
-    @action(
-        detail=False,
-        methods=['get'],
-        permission_classes=(IsAuthenticated, )
-    )
-    def me(self, request):
-        serializer = self.get_serializer(self.request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    serializer_class = UserSerializer
+    permission_classes = [DjangoModelPermissions, ]
 
 
 class FollowApiView(APIView):

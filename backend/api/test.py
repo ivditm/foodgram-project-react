@@ -94,6 +94,7 @@ class RecipeApiTest(APITestCase):
         self.client_1 = APIClient()
         self.client_1.force_authenticate(user=self.user_1)
         self.client_not_auth = APIClient()
+        self.client_3 = APIClient()
 
     def test_access(self):
         for user in [self.client, self.client_not_auth]:
@@ -122,7 +123,7 @@ class RecipeApiTest(APITestCase):
             'password': 'blya1234',
             'email': 'blya@yandex.ru',
         }
-        self.assertEqual(self.client_not_auth.post('/api/auth/token/login/',
+        self.assertEqual(self.client_3.post('/api/auth/token/login/',
                          data, format='json').status_code, HTTPStatus.CREATED)
 
     def test_profile(self):
