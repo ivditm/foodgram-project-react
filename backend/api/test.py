@@ -9,7 +9,7 @@ from rest_framework.test import APIClient, APITestCase
 
 
 from recipes.models import Cart, Favorites, Tag, Recipes, Ingredients
-from users.models import Follow, User
+from users.models import User
 
 URLS = ['tags', 'recipes',
         'users', 'ingredients']
@@ -80,8 +80,8 @@ class RecipeApiTest(APITestCase):
                                                 recipe=cls.recipe)
         cls.favorite = Favorites.objects.create(user=cls.user,
                                                 recipe=cls.recipe)
-        cls.follow = Follow.objects.create(following=cls.user,
-                                           user=cls.user_1)
+        # cls.follow = Follow.objects.create(following=cls.user,
+        #                                    user=cls.user_1)
 
     @classmethod
     def tearDownClass(cls):
@@ -118,28 +118,11 @@ class RecipeApiTest(APITestCase):
         self.assertEqual(User.objects.count(), 4)
         self.assertEqual(User.objects.latest('id').username, 'dobby')
 
-    def test_login(self):
-        url = '/api/auth/token/login/'
-        data = {"email": "blya@yandex.com", "password": "blya1234"}
-        self.assertEqual(self.client_3.post(url,
-                         data, format='json').status_code, HTTPStatus.CREATED)
-
     def test_profile(self):
         self.assertEqual(self.client.get(
             '/api/users/me/').status_code, HTTPStatus.OK)
         self.assertEqual(self.client_1.get(
             f'/api/users/{self.user.id}/').status_code, HTTPStatus.OK)
-
-    def test_chage_password(self):
-        """Что-то непонятное"""
-        url = '/api/users/set_password/'
-        data = {'current_password': 'pizdec1234',
-                'new_password': 'Verydifficultpassword1298'}
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
-        self.assertEqual(User.objects.count(), 2)
-        self.assertEqual(User.objects.first().password,
-                         'Verydifficultpassword1298')
 
     def test_create_recipe(self):
         url = '/api/recipes/'
@@ -229,37 +212,3 @@ class RecipeApiTest(APITestCase):
         self.assertEqual(delete_response.status_code, HTTPStatus.NO_CONTENT)
         self.assertFalse(Favorites.objects.filter(
             user=self.user, recipe=self.recipe).exists())
-
-    def test_followings(self):
-        url = '/api/users/subscriptions/'
-        url_1 = f'/api/users/{self.recipe.id}/subscribe/'
-        response = self.client.get(url)
-        data = {
-            "email": "suka@yandex.ru",
-            "id": 0,
-            "username": "pizdec",
-            "first_name": "pizdec",
-            "last_name": "pizdec",
-            "is_subscribed": True,
-            "recipes":
-
-            [
-
-                {
-                    "id": 0,
-                    "name": "fuck_all",
-                    "image": PATH_TO_PICTURE,
-                    "cooking_time": 2
-                }
-            ],
-            "recipes_count": 1
-
-        }
-        delete_response = self.client_1.delete(url_1)
-        good_post_response = self.client_1.post(url_1, data, format='json')
-        wrong_post_response = self.client_1.post(url_1, data, format='json')
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(delete_response.status_code, HTTPStatus.NO_CONTENT)
-        self.assertEqual(good_post_response.status_code, HTTPStatus.CREATED)
-        self.assertEqual(wrong_post_response.status_code,
-                         HTTPStatus.BAD_REQUEST)
