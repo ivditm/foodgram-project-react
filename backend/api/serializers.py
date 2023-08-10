@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
+# from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.serializers import (IntegerField, ModelSerializer,
+from rest_framework.serializers import (CharField, IntegerField,
+                                        ModelSerializer,
                                         PrimaryKeyRelatedField,
                                         SerializerMethodField,
                                         ReadOnlyField)
@@ -59,12 +60,30 @@ class UserSerializer(ModelSerializer):
 
 
 class ShowFollowSerializer(ModelSerializer):
+    email = CharField(
+        source='following.email',
+        read_only=True)
+    id = IntegerField(
+        source='following.id',
+        read_only=True)
+    username = CharField(
+        source='following.username',
+        read_only=True)
+    first_name = CharField(
+        source='following.first_name',
+        read_only=True)
+    last_name = CharField(
+        source='following.last_name',
+        read_only=True)
+    recipes = SerializerMethodField()
+    is_subscribed = SerializerMethodField()
+    recipes_count = ReadOnlyField(
+        source='following.recipes.count')
     is_subscribed = SerializerMethodField()
     recipes = SerializerMethodField()
-    recipes_count = SerializerMethodField()
 
     class Meta:
-        model = User
+        model = Follow
         fields = (
             'id', 'email', 'username', 'first_name', 'last_name',
             'is_subscribed', 'recipes', 'recipes_count'
@@ -72,22 +91,23 @@ class ShowFollowSerializer(ModelSerializer):
         read_only_fields = fields
 
     def get_is_subscribed(self, obj):
-        if not self.context['request'].user.is_authenticated:
-            return False
-        return Follow.objects.filter(
-            following=obj, user=self.context['request'].user).exists()
+        if Follow.objects.filter(
+            user=self.context.get('request').user,
+            following=obj.following
+        ):
+            return True
+        return False
 
     def get_recipes(self, obj):
         recipes_limit = int(self.context['request'].GET.get(
             'recipes_limit', 10))
-        user = get_object_or_404(User, pk=obj.pk)
-        recipes = Recipes.objects.filter(author=user)[:recipes_limit]
+        recipes = obj.following.recipes.all()[:recipes_limit]
 
         return ShortRecipeSerializer(recipes, many=True).data
 
-    def get_recipes_count(self, obj):
-        user = get_object_or_404(User, pk=obj.pk)
-        return Recipes.objects.filter(author=user).count()
+    # def get_recipes_count(self, obj):
+    #     user = get_object_or_404(User, pk=obj.pk)
+    #     return Recipes.objects.filter(author=user).count()
 
 
 class TagSerializer(ModelSerializer):

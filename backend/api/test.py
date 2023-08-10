@@ -45,8 +45,8 @@ class RecipeApiTest(APITestCase):
                                        password='pizdec1234')
         cls.user_1 = User.objects.create(username='suka',
                                          email='suka@yandex.ru',
-                                         first_name='pizdec',
-                                         last_name='pizdec',
+                                         first_name='suka',
+                                         last_name='suka',
                                          password='suka1234')
         cls.user_2 = User.objects.create(username='blya',
                                          email='blya@yandex.ru',
@@ -119,11 +119,9 @@ class RecipeApiTest(APITestCase):
         self.assertEqual(User.objects.latest('id').username, 'dobby')
 
     def test_login(self):
-        data = {
-            'password': 'blya1234',
-            'email': 'blya@yandex.ru',
-        }
-        self.assertEqual(self.client_3.post('/api/auth/token/login/',
+        url = '/api/auth/token/login/'
+        data = {"email": "blya@yandex.com", "password": "blya1234"}
+        self.assertEqual(self.client_3.post(url,
                          data, format='json').status_code, HTTPStatus.CREATED)
 
     def test_profile(self):
@@ -235,7 +233,6 @@ class RecipeApiTest(APITestCase):
     def test_followings(self):
         url = '/api/users/subscriptions/'
         url_1 = f'/api/users/{self.recipe.id}/subscribe/'
-        # url_2 = f'/api/users/{self.recipe_1.id}/shopping_cart/'
         response = self.client.get(url)
         data = {
             "email": "suka@yandex.ru",

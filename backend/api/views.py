@@ -3,83 +3,22 @@ from django.db.models import Sum
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
+
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from recipes.models import (Cart, Favorites, Ingredients, RecipeIngridient,
                             Recipes, Tag)
-from users.models import Follow
 from .filters import IngredientsFilter, RecipeFilterSet
 from .pagination import PageLimitPagination
 from .permissions import AdminOrReadOnly, AuthorStaffOrReadOnly
 from .serializers import (AddRecipeSerializer, FavouriteSerializer,
                           IngredientSerializer, ShoppingListSerializer,
-                          ShowRecipeFullSerializer, TagSerializer,
-                          UserSerializer, ShowFollowSerializer)
+                          ShowRecipeFullSerializer, TagSerializer)
 
 User = get_user_model()
-
-
-class UserViewSet(DjoserUserViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [DjangoModelPermissions, ]
-
-
-class FollowApiView(APIView):
-    permission_classes = [IsAuthenticated, ]
-
-    def post(self, request, *args, **kwargs):
-        following = get_object_or_404(User, pk=kwargs.get('id', None))
-        user = request.user
-
-        if following == user:
-            return Response(
-                {'errors': 'Вы не можете подписываться на себя'},
-                status=status.HTTP_400_BAD_REQUEST)
-
-        if Follow.objects.filter(following=following, user=user).exists():
-            return Response(
-                {'errors': 'Вы уже подписаны на этого пользователя'},
-                status=status.HTTP_400_BAD_REQUEST)
-
-        obj = Follow(following=following, user=user)
-        obj.save()
-
-        serializer = ShowFollowSerializer(
-            following, context={'request': request})
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, id):
-        user = request.user
-        following = get_object_or_404(User, id=id)
-        try:
-            subscription = get_object_or_404(Follow, user=user,
-                                             following=following)
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Follow.DoesNotExist:
-            return Response(
-                'Ошибка отписки',
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-
-class ListFollowViewSet(generics.ListAPIView):
-    queryset = User.objects.all()
-    permission_classes = [IsAuthenticated, ]
-    serializer_class = ShowFollowSerializer
-    pagination_class = PageLimitPagination
-
-    def get_queryset(self):
-        user = self.request.user
-        return User.objects.filter(followings__user=user)
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -97,18 +36,6 @@ class IngredientsViewSet(ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = IngredientsFilter
     pagination_class = None
-
-
-def download_file_response(ingredients_list):
-    shop_list = []
-    for item in ingredients_list:
-        shop_list.append(f'{item["ingredient__name"]} - {item["amount"]} '
-                         f'{item["ingredient__measurement_unit"]} \n')
-
-    response = HttpResponse(shop_list, 'Content-Type: text/plain')
-    response['Content-Disposition'] = ('attachment; '
-                                       'filename="buylist.txt"')
-    return response
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -188,10 +115,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["GET"],
             permission_classes=[permissions.IsAuthenticated])
     def download_shopping_cart(self, request):
-        ingredients_list = RecipeIngridient.objects.filter(
-            recipe__shopping_cart__user=request.user
-        ).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).annotate(amount=Sum('amount'))
-        return download_file_response(ingredients_list)
+        response = HttpResponse([f'{item["ingredient__name"]}'
+                                 f' - {item["amount"]} '
+                                 f'{item["ingredient__measurement_unit"]} \n'
+                                 for item in RecipeIngridient.objects.filter(
+                                     recipe__shopping_cart__user=request.user
+                                 ).values(
+                                     'ingredient__name',
+                                     'ingredient__measurement_unit'
+                                 ).annotate(amount=Sum('amount'))],
+                                'Content-Type: text/plain')
+        response['Content-Disposition'] = ('attachment; '
+                                           'filename="buylist.txt"')
+        return response
